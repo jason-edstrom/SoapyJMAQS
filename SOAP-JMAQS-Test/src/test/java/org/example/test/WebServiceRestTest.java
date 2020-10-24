@@ -88,7 +88,7 @@ public class WebServiceRestTest extends BaseWebServiceTest {
     StringEntity entity = new StringEntity(messageOutputStream.toString(), ContentType.TEXT_XML);
     CloseableHttpClient client = HttpClientBuilder.create().build();
     //CloseableHttpClient closeableHttpClient = this.getTestObject().getWebServiceDriver().getHttpClient("text/xml");
-    HttpPost request = new HttpPost("http://localhost:8080/ws");
+    HttpPost request = new HttpPost("http://10.10.10.100:8080/ws");
     request.setHeader("Content-Type", "text/xml");
     request.setEntity(entity);
     CloseableHttpResponse execute = client.execute(request);
