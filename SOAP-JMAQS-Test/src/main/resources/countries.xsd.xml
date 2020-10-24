@@ -1,0 +1,3 @@
+<gs:getCountryRequest xmlns:gs="http://spring.io/guides/gs-producing-web-service">
+  <gs:name>string</gs:name>
+</gs:getCountryRequest>
