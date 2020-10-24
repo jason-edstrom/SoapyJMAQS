@@ -66,5 +66,8 @@
         <!-- Time-out in milliseconds -->
         <WebServiceTimeout>10000</WebServiceTimeout>
     </WebServiceMaqs>
+    <SoapMaqs>
+        <SoapPrefix>soapenv</SoapPrefix>
+    </SoapMaqs>
 
 </configuration>

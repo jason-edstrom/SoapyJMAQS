@@ -1,5 +1,6 @@
 package org.example.test;
 
+import com.magenic.jmaqs.utilities.logging.MessageType;
 import com.magenic.jmaqs.webservices.jdk8.BaseWebServiceTest;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -95,6 +96,51 @@ public class WebServiceRestTest extends BaseWebServiceTest {
 //    CloseableHttpResponse closeableHttpResponse = this.getTestObject().getWebServiceDriver()
 //        .postContent("http://localhost:8080/ws", stringEntity, ContentType.TEXT_XML, false);
     Assert.assertEquals(execute.getStatusLine().getStatusCode(), 200);
+  }
+
+  @Test
+  public void SOAPJMAQSTest() throws JAXBException, IOException, SOAPException, ParserConfigurationException, SAXException, URISyntaxException {
+    this.getLogger().logMessage(MessageType.INFORMATION, "Starting data manipulations");
+    GetCountryRequest getCountryRequest = new GetCountryRequest();
+    getCountryRequest.setName("Spain");
+    this.getLogger().logMessage(MessageType.INFORMATION, "Starting marshalling process");
+    JAXBContext jaxbContext = JAXBContext.newInstance(GetCountryRequest.class);
+    Marshaller marshaller = jaxbContext.createMarshaller();
+    marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+    OutputStream outputStream = new ByteArrayOutputStream();
+    marshaller.marshal(getCountryRequest, outputStream);
+    outputStream.flush();
+    outputStream.close();
+    this.getLogger().logMessage(MessageType.INFORMATION, "Completed marshalling");
+    this.getLogger().logMessage(MessageType.VERBOSE, outputStream.toString());
+
+    this.getLogger().logMessage(MessageType.INFORMATION, "Crafting SOAP Message");
+    MessageFactory messageFactory = MessageFactory.newInstance();
+    SOAPMessage message = messageFactory.createMessage();
+    SOAPEnvelope envelope = message.getSOAPPart().getEnvelope();
+    envelope.removeNamespaceDeclaration(envelope.getPrefix());
+    envelope.addNamespaceDeclaration("gs","http://spring.io/guides/gs-producing-web-service");
+    envelope.addNamespaceDeclaration("soapenv","http://schemas.xmlsoap.org/soap/envelope/");
+    envelope.setPrefix("soapenv");
+    SOAPBody body = envelope.getBody();
+    SOAPHeader header = envelope.getHeader();
+    header.setPrefix("soapenv");
+    body.setPrefix("soapenv");
+    DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+    documentBuilderFactory.setNamespaceAware(true);
+    documentBuilderFactory.setSchema(marshaller.getSchema());
+    DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+    Document document = documentBuilder.parse(new InputSource(new StringReader(outputStream.toString())));
+    body.addDocument(document);
+    message.saveChanges();
+    OutputStream messageOutputStream = new ByteArrayOutputStream();
+    message.writeTo(messageOutputStream);
+    this.getLogger().logMessage(MessageType.INFORMATION, "Completed and saved SOAP Message changes");
+    this.getLogger().logMessage(MessageType.VERBOSE, messageOutputStream.toString());
+    StringEntity entity = new StringEntity(messageOutputStream.toString(), ContentType.TEXT_XML);
+    CloseableHttpResponse closeableHttpResponse = this.getTestObject().getWebServiceDriver()
+        .postContent("/ws", entity, ContentType.TEXT_XML, false);
+    Assert.assertEquals(closeableHttpResponse.getStatusLine().getStatusCode(), 200);
   }
 
 
