@@ -69,5 +69,8 @@
     <SoapMaqs>
         <SoapPrefix>soapenv</SoapPrefix>
     </SoapMaqs>
+    <SoapMaqsNameSpaces>
+        <gs>http://spring.io/guides/gs-producing-web-service</gs>
+    </SoapMaqsNameSpaces>
 
 </configuration>
