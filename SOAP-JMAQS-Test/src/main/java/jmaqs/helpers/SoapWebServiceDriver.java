@@ -29,19 +29,22 @@ import java.util.function.Consumer;
 
 public class SoapWebServiceDriver extends WebServiceDriver {
 
-    private final MessageFactory messageFactory = MessageFactory.newInstance();
-    private final SOAPMessage soapMessage = messageFactory.createMessage();
 
-    public SoapWebServiceDriver(String baseAddress) throws URISyntaxException, SOAPException {
+    private final SOAPMessage soapMessage;
+
+    public SoapWebServiceDriver(SOAPMessage message, String baseAddress) throws URISyntaxException {
         super(baseAddress);
+        soapMessage = message;
     }
 
-    public SoapWebServiceDriver(URI baseAddress) throws SOAPException {
+    public SoapWebServiceDriver(URI baseAddress) throws SOAPException, URISyntaxException {
         super(baseAddress);
+        soapMessage = SoapWebServiceDriverFactory.getDefaultMessage();
     }
 
-    public SoapWebServiceDriver(CloseableHttpClient newHttpClient) throws SOAPException {
+    public SoapWebServiceDriver(CloseableHttpClient newHttpClient, SOAPMessage message) {
         super(newHttpClient);
+        soapMessage = message;
     }
 
     private String getDefaultSoapMessage(String outputStream) throws SOAPException, ParserConfigurationException, SAXException, IOException {
