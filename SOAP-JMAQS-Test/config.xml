@@ -61,7 +61,7 @@
 
     <WebServiceMaqs>
         <!-- Web service root -->
-        <WebServiceUri>http://localhost:8080/</WebServiceUri>
+        <WebServiceUri>http://10.10.10.100:8080/</WebServiceUri>
 
         <!-- Time-out in milliseconds -->
         <WebServiceTimeout>10000</WebServiceTimeout>

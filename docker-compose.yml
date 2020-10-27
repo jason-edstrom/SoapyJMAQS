@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  soap-service:
+    build:
+      context: ./complete
+    ports:
+      - '8080:8080'
+  portainer-ce:
+    image: portainer/portainer-ce
+    ports:
+      - '8000:8000'
+      - '9000:9000'
