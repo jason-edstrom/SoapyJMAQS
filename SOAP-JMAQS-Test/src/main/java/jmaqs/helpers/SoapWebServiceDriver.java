@@ -1,9 +1,8 @@
 package jmaqs.helpers;
 
-import com.magenic.jmaqs.utilities.logging.MessageType;
 import com.magenic.jmaqs.webservices.jdk8.WebServiceDriver;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.example.models.countries.GetCountryRequest;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -14,7 +13,6 @@ import javax.xml.bind.Marshaller;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.soap.MessageFactory;
 import javax.xml.soap.SOAPEnvelope;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
@@ -37,7 +35,7 @@ public class SoapWebServiceDriver extends WebServiceDriver {
         soapMessage = message;
     }
 
-    public SoapWebServiceDriver(URI baseAddress) throws SOAPException, URISyntaxException {
+    public SoapWebServiceDriver(URI baseAddress) throws SOAPException {
         super(baseAddress);
         soapMessage = SoapWebServiceDriverFactory.getDefaultMessage();
     }
@@ -47,50 +45,54 @@ public class SoapWebServiceDriver extends WebServiceDriver {
         soapMessage = message;
     }
 
-    private String getDefaultSoapMessage(String outputStream) throws SOAPException, ParserConfigurationException, SAXException, IOException {
+    public String getDefaultSoapMessage(String outputStream) throws SOAPException, ParserConfigurationException, SAXException, IOException {
         //this.getLogger().logMessage(MessageType.INFORMATION, "Crafting SOAP Message");
         modifySoapPrefix();
         addNameSpaceCollectionToMessage((HashMap<String, String>) SoapConfig.getSoapNamespaces());
         addStringToBody(outputStream);
-        String messageOutputStream = finalizeSoapMessage();
+        String messageOutputStream = getSoapBodyString();
         //this.getLogger().logMessage(MessageType.INFORMATION, "Completed and saved SOAP Message changes");
         //this.getLogger().logMessage(MessageType.VERBOSE, messageOutputStream);
         return messageOutputStream;
     }
 
-    private String finalizeSoapMessage() throws SOAPException, IOException {
-        return finalizeSoapMessage(soapMessage);
+    public String getSoapBodyString() throws SOAPException, IOException {
+        return getSoapBodyString(soapMessage);
     }
 
-    private String finalizeSoapMessage(SOAPMessage message) throws SOAPException, IOException {
+    public String getSoapBodyString(SOAPMessage message) throws SOAPException, IOException {
         message.saveChanges();
         OutputStream messageOutputStream = new ByteArrayOutputStream();
         message.writeTo(messageOutputStream);
         return messageOutputStream.toString();
     }
 
-    private void addStringToBody(String outputStream) throws ParserConfigurationException, SAXException, IOException, SOAPException {
+    public StringEntity getSoapBodyStringEntity() throws IOException, SOAPException {
+        return new StringEntity(getSoapBodyString());
+    }
+
+    public void addStringToBody(String outputStream) throws ParserConfigurationException, SAXException, IOException, SOAPException {
         addStringToBody(outputStream, soapMessage);
     }
 
-    private void addStringToBody(String outputStream, SOAPMessage message) throws ParserConfigurationException, SAXException, IOException, SOAPException {
+    public void addStringToBody(String outputStream, SOAPMessage message) throws ParserConfigurationException, SAXException, IOException, SOAPException {
         Document document = getDocument(outputStream);
         message.getSOAPBody().addDocument(document);
     }
 
-    private void addNameSpaceToMessage(String key, String value) throws SOAPException {
+    public void addNameSpaceToMessage(String key, String value) throws SOAPException {
         addNameSpaceToMessage(soapMessage.getSOAPPart().getEnvelope(), key, value);
     }
 
-    private void addNameSpaceToMessage(SOAPEnvelope envelope, String key, String value) throws SOAPException {
+    public void addNameSpaceToMessage(SOAPEnvelope envelope, String key, String value) throws SOAPException {
         envelope.addNamespaceDeclaration(key, value);
     }
 
-    private void addNameSpaceCollectionToMessage(HashMap<String, String> map) throws SOAPException {
+    public void addNameSpaceCollectionToMessage(HashMap<String, String> map) throws SOAPException {
         addNameSpaceCollectionToMessage(soapMessage.getSOAPPart().getEnvelope(), map);
     }
 
-    private void addNameSpaceCollectionToMessage(SOAPEnvelope envelope, HashMap<String, String> map) {
+    public void addNameSpaceCollectionToMessage(SOAPEnvelope envelope, HashMap<String, String> map) {
         Consumer consumer = (key) -> {
             String value = map.get(key);
             try {
@@ -104,18 +106,23 @@ public class SoapWebServiceDriver extends WebServiceDriver {
     }
 
 
-    private String createSoapPayload(GetCountryRequest getCountryRequest) throws JAXBException, IOException {
+    public  <T> String createSoapPayload(T object) throws JAXBException, IOException, ClassNotFoundException {
         //this.getLogger().logMessage(MessageType.INFORMATION, "Starting marshalling process");
         OutputStream outputStream = new ByteArrayOutputStream();
-        JAXBContext jaxbContext = JAXBContext.newInstance(GetCountryRequest.class);
-        Marshaller marshaller = jaxbContext.createMarshaller();
-        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-        marshaller.marshal(getCountryRequest, outputStream);
+        Marshaller marshaller = getMarshaller(object);
+        marshaller.marshal(object, outputStream);
         outputStream.flush();
         outputStream.close();
         //this.getLogger().logMessage(MessageType.INFORMATION, "Completed marshalling");
         //this.getLogger().logMessage(MessageType.VERBOSE, outputStream.toString());
         return outputStream.toString();
+    }
+
+    private <T> Marshaller getMarshaller(T object) throws JAXBException {
+        JAXBContext jaxbContext = JAXBContext.newInstance(object.getClass().getPackage().getName());
+        Marshaller marshaller = jaxbContext.createMarshaller();
+        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+        return marshaller;
     }
 
     private Document getDocument(String bodyContent) throws ParserConfigurationException, SAXException, IOException {
@@ -126,17 +133,29 @@ public class SoapWebServiceDriver extends WebServiceDriver {
     }
 
     private SOAPEnvelope modifySoapPrefix() throws SOAPException {
-        return modifySoapPrefix(soapMessage.getSOAPPart().getEnvelope());
+        return modifySoapPrefix(SoapConfig.getSoapPrefix());
     }
 
 
-    private SOAPEnvelope modifySoapPrefix(SOAPEnvelope envelope) throws SOAPException {
+
+    private SOAPEnvelope modifySoapPrefix(String prefix) throws SOAPException {
+        return modifySoapPrefix(soapMessage.getSOAPPart().getEnvelope(), prefix, "http://schemas.xmlsoap.org/soap/envelope/");
+    }
+
+    private SOAPEnvelope modifySoapPrefix(SOAPEnvelope envelope, String prefix, String url) throws SOAPException {
         //this.getLogger().logMessage(MessageType.INFORMATION, "removing default prefix: %s", envelope.getPrefix());
         envelope.removeNamespaceDeclaration(envelope.getPrefix());
-        addNameSpaceToMessage(envelope, SoapConfig.getSoapPrefix(), "http://schemas.xmlsoap.org/soap/envelope/");
-        envelope.setPrefix(SoapConfig.getSoapPrefix());
-        envelope.getBody().setPrefix(SoapConfig.getSoapPrefix());
-        envelope.getHeader().setPrefix(SoapConfig.getSoapPrefix());
+        addNameSpaceToMessage(envelope, prefix, url);
+        envelope.setPrefix(prefix);
+        envelope.getBody().setPrefix(prefix);
+        envelope.getHeader().setPrefix(prefix);
         return envelope;
+    }
+
+    public <T> void addObjectToSoapMessage(T object)
+        throws JAXBException, IOException, ClassNotFoundException, SOAPException, SAXException,
+        ParserConfigurationException {
+        String soapPayload = createSoapPayload(object);
+        addStringToBody(soapPayload);
     }
 }
