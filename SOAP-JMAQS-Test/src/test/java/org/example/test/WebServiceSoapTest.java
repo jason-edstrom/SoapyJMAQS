@@ -14,7 +14,7 @@ public class WebServiceSoapTest extends BaseSoapWebServiceTest {
     GetCountryRequest request = new GetCountryRequest();
     request.setName("Spain");
 
-    this.getTestObject().getWebServiceDriver().sendMessage(request);
+    //this.getTestObject().getWebServiceDriver().sendMessage(request);
 
     //SoapWebServiceDriver driver = new SoapWebServiceDriver(WebServiceConfig.getWebServiceUri());
     //driver.sendMessage(request);

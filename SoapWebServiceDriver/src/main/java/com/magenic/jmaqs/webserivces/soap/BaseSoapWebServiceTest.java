@@ -6,6 +6,9 @@ import com.magenic.jmaqs.base.BaseExtendableTest;
 import com.magenic.jmaqs.utilities.helper.StringProcessor;
 import com.magenic.jmaqs.utilities.logging.Logger;
 import com.magenic.jmaqs.webservices.jdk8.WebServiceConfig;
+import com.magenic.jmaqs.webservices.jdk8.WebServiceTestObject;
+import java.net.URI;
+import javax.xml.soap.SOAPException;
 import org.testng.ITestResult;
 
 import java.net.URISyntaxException;
@@ -13,7 +16,7 @@ import java.net.URISyntaxException;
 /**
  * Base web service test class.
  */
-public class BaseSoapWebServiceTest extends BaseExtendableTest<SoapWebServiceTestObject> {
+public class BaseSoapWebServiceTest extends BaseExtendableTest<WebServiceTestObject> {
 
   /**
    * Get the Web Service Driver.
@@ -21,7 +24,7 @@ public class BaseSoapWebServiceTest extends BaseExtendableTest<SoapWebServiceTes
    * @return WebServiceDriver
    */
   public SoapWebServiceDriver getWebServiceDriver() {
-    return this.getTestObject().getWebServiceDriver();
+    return (SoapWebServiceDriver) this.getTestObject().getWebServiceDriver();
   }
 
   /**
@@ -50,8 +53,8 @@ public class BaseSoapWebServiceTest extends BaseExtendableTest<SoapWebServiceTes
    * @return WebServiceDriver
    * @throws URISyntaxException when URI is incorrect
    */
-  protected SoapWebServiceDriver getWebServiceClient() throws URISyntaxException {
-    return new SoapWebServiceDriver(WebServiceConfig.getWebServiceUri());
+  protected SoapWebServiceDriver getWebServiceClient() throws URISyntaxException, SOAPException {
+    return new SoapWebServiceDriver(new URI(WebServiceConfig.getWebServiceUri()));
   }
 
   /**
@@ -62,10 +65,10 @@ public class BaseSoapWebServiceTest extends BaseExtendableTest<SoapWebServiceTes
     Logger logger = this.createLogger();
     try {
 
-      SoapWebServiceTestObject webServiceTestObject = new SoapWebServiceTestObject(
+      WebServiceTestObject webServiceTestObject = new WebServiceTestObject(
           this.getWebServiceClient(), logger, this.getFullyQualifiedTestClassName());
       this.setTestObject(webServiceTestObject);
-    } catch (URISyntaxException e) {
+    } catch (URISyntaxException | SOAPException e) {
       getLogger().logMessage(
           StringProcessor.safeFormatter("Test Object could not be created: %s", e.getMessage()));
     }
