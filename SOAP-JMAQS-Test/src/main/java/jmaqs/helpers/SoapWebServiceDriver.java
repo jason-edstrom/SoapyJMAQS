@@ -1,6 +1,7 @@
 package jmaqs.helpers;
 
 import com.magenic.jmaqs.webservices.jdk8.WebServiceDriver;
+import javax.xml.bind.Unmarshaller;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.w3c.dom.Document;
@@ -29,6 +30,7 @@ public class SoapWebServiceDriver extends WebServiceDriver {
 
 
     private final SOAPMessage soapMessage;
+    private JAXBContext jaxbContext;
 
     public SoapWebServiceDriver(SOAPMessage message, String baseAddress) throws URISyntaxException {
         super(baseAddress);
@@ -118,11 +120,26 @@ public class SoapWebServiceDriver extends WebServiceDriver {
         return outputStream.toString();
     }
 
-    private <T> Marshaller getMarshaller(T object) throws JAXBException {
-        JAXBContext jaxbContext = JAXBContext.newInstance(object.getClass().getPackage().getName());
+    public <T> Marshaller getMarshaller(T object) throws JAXBException {
+        jaxbContext = JAXBContext.newInstance(object.getClass().getPackage().getName());
+        return getMarshaller();
+    }
+
+    public Marshaller getMarshaller() throws JAXBException {
         Marshaller marshaller = jaxbContext.createMarshaller();
         marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
         return marshaller;
+    }
+
+    public <T> Unmarshaller getUnMarshaller(T object) throws JAXBException {
+        jaxbContext = JAXBContext.newInstance(object.getClass().getPackage().getName());
+        return getUnMarshaller();
+    }
+
+    public <T> Unmarshaller getUnMarshaller() throws JAXBException {
+
+        return jaxbContext.createUnmarshaller();
+
     }
 
     private Document getDocument(String bodyContent) throws ParserConfigurationException, SAXException, IOException {

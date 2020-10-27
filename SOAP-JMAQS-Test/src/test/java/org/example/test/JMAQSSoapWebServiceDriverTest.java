@@ -1,6 +1,7 @@
 package org.example.test;
 
 import com.magenic.jmaqs.utilities.logging.MessageType;
+import com.magenic.jmaqs.webserivces.soap.BaseSoapWebServiceTest;
 import com.magenic.jmaqs.webservices.jdk8.BaseWebServiceTest;
 import java.net.URISyntaxException;
 import javax.xml.soap.SOAPException;
@@ -15,32 +16,22 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-public class SoapWebServiceDriverTest extends BaseWebServiceTest {
-
-    @BeforeMethod
-    public void setUp() throws URISyntaxException, SOAPException {
-        SoapWebServiceDriver defaultSoapDriver = SoapWebServiceDriverFactory.getDefaultSoapDriver();
-        this.setWebServiceDriver(defaultSoapDriver);
-    }
+public class JMAQSSoapWebServiceDriverTest extends BaseSoapWebServiceTest {
 
     @Test
     public void SOAPDriverTest () throws Exception {
         GetCountryRequest getCountryRequest = new GetCountryRequest();
         getCountryRequest.setName("Spain");
-        this.getSoapDriver().addObjectToSoapMessage(getCountryRequest);
-        this.getLogger().logMessage(MessageType.INFORMATION, getSoapDriver().getSoapBodyString());
+        this.getWebServiceDriver().addObjectToSoapMessage(getCountryRequest);
+        this.getLogger().logMessage(MessageType.INFORMATION, getWebServiceDriver().getSoapBodyString());
         CloseableHttpResponse closeableHttpResponse =
-            this.getSoapDriver().postContent("ws", this.getSoapDriver().getSoapBodyStringEntity(), ContentType.TEXT_XML, true);
+            this.getWebServiceDriver().postContent("ws", this.getWebServiceDriver().getSoapBodyStringEntity(), ContentType.TEXT_XML, true);
         GetCountryResponse countryResponse =
-            (GetCountryResponse) SoapUtilities.getResponseBodyasObjects(closeableHttpResponse, this.getSoapDriver().getUnMarshaller(
+            (GetCountryResponse) SoapUtilities.getResponseBodyasObjects(closeableHttpResponse, getWebServiceDriver().getUnMarshaller(
                 new GetCountryResponse()));
 
         Assert.assertEquals(countryResponse.getCountry().getCapital(), "Madrid");
         Assert.assertEquals(countryResponse.getCountry().getPopulation(), 46704314);
     }
 
-    public SoapWebServiceDriver getSoapDriver()
-    {
-        return (SoapWebServiceDriver) this.getTestObject().getWebServiceDriver();
-    }
 }
